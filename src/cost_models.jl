@@ -32,7 +32,7 @@ Calculates the LCOE using the same numbers as NREL's FLORIS Model
 - `rotor_diameter::array`: Vector of Rotor Diameters for the Turbines
 - `hub_height::array`: Vector of Hub Heights for the Turbines
 - `rated_power::array`: Vector of rated powers for the Turbines in kW
-- `AEP::Float`: Annual Energy Production
+- `AEP::Float`: Annual Energy Production in MWh/MW/year
 - `OpEx::AbstractCostParameter`: KW of the Farm
 """
 
@@ -59,5 +59,5 @@ function cost_of_energy(rotor_diameter, hub_height, rated_power, AEP, Cost::Leve
     # Uses parameters in COE function from eq 1 in 2016 Cost of Wind Energy Review
     LCOE = ((TCC+BOS+FC)*FCR + OpEx)/(AEP/1000)
 
-    return LCOE # LCOE is in units of $/kWh
+    return LCOE # LCOE is in units of $/MWh
 end
