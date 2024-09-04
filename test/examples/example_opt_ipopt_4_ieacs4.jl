@@ -2,6 +2,7 @@ using Ipopt
 using DelimitedFiles 
 using PyPlot
 import ForwardDiff
+using Distributed            # IB: I think thi sis needed
 
 using CSV
 using DataFrames
@@ -28,7 +29,7 @@ function boundary_wrapper(x, params)
     turbine_x = x[1:nturbines]
     turbine_y = x[nturbines+1:end]
 
-    boundcon_a = ff.ray_trace_boundary(boundary_vertices_a, boundary_normals_a, turbine_x[1:31], turbine_y[1:31])
+    boundcon_a = ff.ray_trace_boundary(boundary_vertices_a, boundary_normals_a, turbine_x[1:31], turbine_y[1:31]) # IB: perhaps "_trace_" -> "_casting_" ?
     boundcon_b = ff.ray_trace_boundary(boundary_vertices_b, boundary_normals_b, turbine_x[32:42], turbine_y[32:42])
     boundcon_c = ff.ray_trace_boundary(boundary_vertices_c, boundary_normals_c, turbine_x[43:58], turbine_y[43:58])
     boundcon_d = ff.ray_trace_boundary(boundary_vertices_d, boundary_normals_d, turbine_x[59:72], turbine_y[59:72])
@@ -123,7 +124,7 @@ function obj_grad(x, grad_f)
 end
 
 # constraint gradients function
-function con_grad(x, mode, rows, cols, values)
+function con_grad(x, mode, rows, cols, values)    # IB: I think the "mode" had to be removed, otherwise an error in Ipopt occurs
     if mode == :Structure
         # report the sparcity structure of the jacobian
         for i = 1:prob.m
@@ -257,14 +258,14 @@ ub = ones(n_designvariables) * Inf
 lb_g = ones(n_constraints) * -Inf
 ub_g = zeros(n_constraints)
 
-# create the problem
+# create the problem  # IB: New names of functions in Ipopt: CreateIpoptProblem, and a new callback-argument in the end is needed -> eval_h)
 prob = createProblem(n_designvariables, lb, ub, n_constraints, lb_g, ub_g, n_designvariables*n_constraints, 0,
     obj, con, obj_grad, con_grad)
 addOption(prob, "hessian_approximation", "limited-memory")
 prob.x = deepcopy(x_initial)
 
 # set intermediate function to be ran at every iteration
-setIntermediateCallback(prob, intermediate)
+setIntermediateCallback(prob, intermediate)          # IB: SetIntermediateCallback
 
 # generate wrapper function surrogates
 spacing_wrapper(x) = spacing_wrapper(x, params)
@@ -278,7 +279,7 @@ println("starting AEP value (MWh): ", aep_wrapper(x_initial)[1]*1E5)
 
 # run and time optimization
 t1 = time()
-status = solveProblem(prob)
+status = solveProblem(prob)      # IB: now called: IpoptSolve I think. Also some issue with function call which crashes the process.
 t2 = time()
 clkt = t2-t1
 xopt = prob.x
